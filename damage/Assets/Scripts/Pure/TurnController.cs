@@ -8,8 +8,11 @@ public class TurnController
     private CharacterInstance player2;
     private CharacterInstance enemy;
 
-    // ReactiveCollection 
+    // ReactiveCollection でキュー管理
     public ReactiveCollection<string> CurrentQueue { get; private set; } = new ReactiveCollection<string>();
+
+    // ターンごとの購読管理
+    private CompositeDisposable turnDisposable;
 
     public TurnController(CharacterInstance p1, CharacterInstance p2, CharacterInstance en)
     {
@@ -20,8 +23,13 @@ public class TurnController
 
     public void StartTurn(SkillSlot player1Slot, SkillSlot player2Slot, BattleUIManager uiManager)
     {
+        // 古い購読を破棄
+        turnDisposable?.Dispose();
+        turnDisposable = new CompositeDisposable();
+
         CurrentQueue.Clear();
 
+        // スロットリセット
         if (player1.IsAlive) player1Slot.ResetSelection();
         if (player2.IsAlive) player2Slot.ResetSelection();
 
@@ -31,28 +39,29 @@ public class TurnController
         if (player2.IsAlive) CurrentQueue.Add("?");
         if (enemy.IsAlive) CurrentQueue.Add(enemy.Name);
 
-        // ReactiveCollection の変更を UI にバインド
-        CurrentQueue.ObserveCountChanged().Subscribe(_ => uiManager.ShowQueue(new List<string>(CurrentQueue))).AddTo(uiManager);
-        CurrentQueue.ObserveReplace().Subscribe(_ => uiManager.ShowQueue(new List<string>(CurrentQueue))).AddTo(uiManager);
+        // UI にキューを反映
+        CurrentQueue.ObserveCountChanged()
+            .Subscribe(_ => uiManager.ShowQueue(new List<string>(CurrentQueue)))
+            .AddTo(turnDisposable);
+        CurrentQueue.ObserveReplace()
+            .Subscribe(_ => uiManager.ShowQueue(new List<string>(CurrentQueue)))
+            .AddTo(turnDisposable);
 
-        // プレイヤーのスロットイベント設定
+        // プレイヤー1のスロット購読
         if (player1.IsAlive)
         {
-            player1Slot.OnStopSpin.Subscribe(skill =>
-            {
-                ReplaceFirstQuestionMark(player1, skill);
-            }).AddTo(uiManager);
-
+            player1Slot.OnStopSpin
+                .Subscribe(skill => ReplaceFirstQuestionMark(player1, skill))
+                .AddTo(turnDisposable);
             player1Slot.StartSpin();
         }
 
+        // プレイヤー2のスロット購読
         if (player2.IsAlive)
         {
-            player2Slot.OnStopSpin.Subscribe(skill =>
-            {
-                ReplaceFirstQuestionMark(player2, skill);
-            }).AddTo(uiManager);
-
+            player2Slot.OnStopSpin
+                .Subscribe(skill => ReplaceFirstQuestionMark(player2, skill))
+                .AddTo(turnDisposable);
             player2Slot.StartSpin();
         }
     }
@@ -64,5 +73,12 @@ public class TurnController
         {
             CurrentQueue[index] = $"{player.Name} → {skill.skillName}";
         }
+    }
+
+    // ターン終了時に購読を破棄
+    public void EndTurn()
+    {
+        turnDisposable?.Dispose();
+        turnDisposable = null;
     }
 }

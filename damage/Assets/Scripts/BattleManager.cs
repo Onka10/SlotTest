@@ -21,6 +21,8 @@ public class BattleManager : MonoBehaviour
     private ActionExecutor actionExecutor;
 
     public float actionDelay = 1f;
+    private bool turnConfirmed = false;
+    private CompositeDisposable turnDisposable;
 
     private void Start()
     {
@@ -40,22 +42,10 @@ public class BattleManager : MonoBehaviour
             ActionDelay = actionDelay
         };
 
-        // UniRxでスロット確定監視
-        Observable.CombineLatest(
-            player1Slot.OnStopSpin,
-            player2Slot.OnStopSpin,
-            (skill1, skill2) => new { Skill1 = skill1, Skill2 = skill2 }
-        ).Subscribe(result =>
-        {
-            Debug.Log("[BattleManager] 両方のスロットが確定しました。Confirmボタンを表示するタイミングです。");
-            OnBothSlotsConfirmed(result.Skill1, result.Skill2);
-        }).AddTo(this);
-
-        // BattleActionQueue の Subject を購読
         actionQueue.OnActionExecuted.Subscribe(action =>
         {
-            Debug.Log($"{action.user.Name} は {action.skill.skillName} を使った！ {action.target.Name} に {action.skill.power} ダメージ！");
             uiManager.UpdateHP(player1, player2, enemy);
+            Debug.Log($"{action.user.Name} は {action.skill.skillName} を使った！ {action.target.Name} に {action.skill.power} ダメージ！");
         }).AddTo(this);
 
         actionQueue.OnQueueFinished.Subscribe(_ =>
@@ -73,7 +63,36 @@ public class BattleManager : MonoBehaviour
 
     private void StartTurn()
     {
+        Debug.Log("[BattleManager] 新しいターン開始");
+        turnConfirmed = false;
+        turnDisposable?.Dispose();
+        turnDisposable = new CompositeDisposable();
+
         turnController.StartTurn(player1Slot, player2Slot, uiManager);
+
+        Observable.CombineLatest(
+            player1Slot.OnStopSpin,
+            player2Slot.OnStopSpin,
+            (s1, s2) => new { Slot1 = s1, Slot2 = s2 }
+        ).Subscribe(_ =>
+        {
+            if (turnConfirmed) return;
+            turnConfirmed = true;
+
+            // Player1 候補リストを渡して Confirm 表示
+            uiManager.ShowSkillConfirmOverlay(player1Slot.candidateSkills, selectedSkill =>
+            {
+                player1Slot.SetSelectedSkill(selectedSkill);
+                player1Slot.OnStopSpin.OnNext(selectedSkill);
+            });
+
+            // Player2 候補リストを渡して Confirm 表示
+            uiManager.ShowSkillConfirmOverlay(player2Slot.candidateSkills, selectedSkill =>
+            {
+                player2Slot.SetSelectedSkill(selectedSkill);
+                player2Slot.OnStopSpin.OnNext(selectedSkill);
+            });
+        }).AddTo(turnDisposable);
     }
 
     public void OnStartQueueButtonPressed()
@@ -101,11 +120,5 @@ public class BattleManager : MonoBehaviour
         }
 
         StartCoroutine(actionExecutor.ExecuteQueueWithDelay());
-    }
-
-    private void OnBothSlotsConfirmed(SkillData skill1, SkillData skill2)
-    {
-        // Confirmボタン表示やUI処理に置き換え可能
-        Debug.Log($"[BattleManager] Player1: {skill1.skillName}, Player2: {skill2.skillName}");
     }
 }
