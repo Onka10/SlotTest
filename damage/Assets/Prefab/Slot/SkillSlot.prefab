@@ -70,6 +70,7 @@ MonoBehaviour:
   reelContent: {fileID: 8810428403538933251}
   symbolPrefab: {fileID: 3047678243772301129, guid: 0f94e9702220ecb4ca81677e987a1dc6, type: 3}
   stopButton: {fileID: 6684544588536799211}
+  stopRangeIndicator: {fileID: 822977054994355035}
 --- !u!1 &5145240089883225935
 GameObject:
   m_ObjectHideFlags: 0
@@ -367,6 +368,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 0d4bea3c506faac449b523478fb8bb25, type: 3}
+--- !u!224 &822977054994355035 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 1538507121434502277, guid: 0d4bea3c506faac449b523478fb8bb25, type: 3}
+  m_PrefabInstance: {fileID: 2175851418248771550}
+  m_PrefabAsset: {fileID: 0}
 --- !u!224 &4130117129032992183 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 2838168212392899177, guid: 0d4bea3c506faac449b523478fb8bb25, type: 3}

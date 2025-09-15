@@ -12,20 +12,30 @@ public class SkillSlotView : MonoBehaviour
     [Header("操作ボタン")]
     public Button stopButton;
 
+    [Header("停止範囲表示")]
+    public RectTransform stopRangeIndicator; // ← EditorでアタッチするImageのRectTransform
+
     private List<SkillSlotCell> rowCells = new List<SkillSlotCell>();
     private float totalHeight = 0f;
 
-    // ボタン押下を発火するイベント
     public event Action OnStopButtonPressed;
 
     private void Awake()
     {
         if (stopButton != null)
+            stopButton.onClick.AddListener(() => OnStopButtonPressed?.Invoke());
+    }
+
+    /// <summary>
+    /// 停止範囲の表示サイズを更新
+    /// </summary>
+    public void UpdateStopRangeIndicator(float stopRange)
+    {
+        if (stopRangeIndicator != null)
         {
-            stopButton.onClick.AddListener(() =>
-            {
-                OnStopButtonPressed?.Invoke();
-            });
+            // Y軸方向に stopRange*2 の高さで中央に配置
+            stopRangeIndicator.sizeDelta = new Vector2(stopRangeIndicator.sizeDelta.x, stopRange * 2);
+            stopRangeIndicator.anchoredPosition = Vector2.zero;
         }
     }
 

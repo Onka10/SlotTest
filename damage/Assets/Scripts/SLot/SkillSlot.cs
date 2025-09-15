@@ -40,6 +40,9 @@ public class SkillSlot : MonoBehaviour
         spinning = true;
         currentSpeed = startSpeed;
         selectedSkill = null;
+
+        // 停止範囲表示を更新
+        view.UpdateStopRangeIndicator(stopRange);
     }
 
     public void StopSpin()
@@ -54,6 +57,7 @@ public class SkillSlot : MonoBehaviour
             float top = rt.anchoredPosition.y;
             float bottom = rt.anchoredPosition.y - rt.sizeDelta.y;
 
+            // 中央 ± stopRange にかかっていれば候補に追加
             if ((top >= -stopRange && top <= stopRange) ||
                 (bottom >= -stopRange && bottom <= stopRange))
             {
@@ -64,10 +68,13 @@ public class SkillSlot : MonoBehaviour
         if (candidateSkills.Count == 0)
             throw new Exception("StopSpin: 範囲内にセルが存在しません");
 
+        // 候補からランダムで1つを選択
         int randomIndex = UnityEngine.Random.Range(0, candidateSkills.Count);
         selectedSkill = candidateSkills[randomIndex];
 
+        // OnStopSpin を発火して BattleManager 側に通知
         OnStopSpin.OnNext(selectedSkill);
+
         Debug.Log($"[SkillSlot] StopSpin 候補数: {candidateSkills.Count}, 選択スキル: {selectedSkill.skillName}");
     }
 
