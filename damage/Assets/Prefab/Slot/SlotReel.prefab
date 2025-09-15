@@ -73,10 +73,9 @@ GameObject:
   - component: {fileID: 2838168212392899177}
   - component: {fileID: 967444844318483529}
   - component: {fileID: 8334091140918669082}
-  - component: {fileID: 8739336022129813507}
   - component: {fileID: 1572137278487470105}
   m_Layer: 5
-  m_Name: Slot
+  m_Name: SlotReel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -140,21 +139,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &8739336022129813507
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6052216475206719286}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bcb6c0f34b01a594da8b7b3f4ff549f3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  reelContent: {fileID: 7239185254056739293}
-  symbolPrefab: {fileID: 3047678243772301129, guid: 0f94e9702220ecb4ca81677e987a1dc6, type: 3}
-  startSpeed: 300
 --- !u!114 &1572137278487470105
 MonoBehaviour:
   m_ObjectHideFlags: 0
