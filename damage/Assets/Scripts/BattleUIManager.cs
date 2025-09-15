@@ -1,8 +1,7 @@
-using System;
 using System.Collections.Generic;
-using UniRx;
 using UnityEngine;
 using UnityEngine.UI;
+using UniRx;
 
 public class BattleUIManager : MonoBehaviour
 {
@@ -14,39 +13,30 @@ public class BattleUIManager : MonoBehaviour
     [Header("行動キュー")]
     public Text actionQueueText;
 
-    [Header("Confirmオーバーレイ")]
-    public GameObject confirmOverlay;       // オーバーレイルート
-    public GameObject skillSlotCellPrefab;  // SkillSlotCell プレハブ
-    public Button confirmButton;
-
     [Header("Startボタン")]
     public Button startButton;
 
-    [Header("Confirm 親オブジェクト (インスペクターで指定)")]
-    public Transform confirmParent1;
-    public Transform confirmParent2;
+    [Header("Confirmオーバーレイ管理")]
+    public OverlayManager overlayManager; // Confirmオーバーレイを担当
 
     public ReactiveProperty<int> Player1HP = new ReactiveProperty<int>();
     public ReactiveProperty<int> Player2HP = new ReactiveProperty<int>();
     public ReactiveProperty<int> EnemyHP = new ReactiveProperty<int>();
     public ReactiveCollection<string> ActionQueue = new ReactiveCollection<string>();
 
-    private Action confirmCallback;
-
     private void Awake()
     {
+        // HP更新購読
         Player1HP.Subscribe(value => player1HPText.text = $"Player1 HP: {value}").AddTo(this);
         Player2HP.Subscribe(value => player2HPText.text = $"Player2 HP: {value}").AddTo(this);
         EnemyHP.Subscribe(value => enemyHPText.text = $"Enemy HP: {value}").AddTo(this);
 
+        // 行動キュー表示更新
         ActionQueue.ObserveCountChanged().Subscribe(_ => RefreshQueueText()).AddTo(this);
         ActionQueue.ObserveReplace().Subscribe(_ => RefreshQueueText()).AddTo(this);
 
         if (startButton != null)
             startButton.interactable = true;
-
-        if (confirmOverlay != null)
-            confirmOverlay.SetActive(false);
     }
 
     private void RefreshQueueText()
@@ -80,35 +70,25 @@ public class BattleUIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 確定スキルオーバーレイを表示（複数候補対応）
+    /// Confirmオーバーレイ表示をOverlayManagerに委譲
     /// </summary>
-    public void ShowSkillConfirmOverlay(List<SkillData> candidateSkills, Action<SkillData> onConfirm)
+    public void ShowSkillConfirmOverlay(List<SkillData> candidateSkills, System.Action<SkillData> onConfirm)
     {
-        if (confirmOverlay == null || skillSlotCellPrefab == null || candidateSkills.Count == 0) return;
-
-        // 既存の子をクリア
-        foreach (Transform child in confirmParent1) Destroy(child.gameObject);
-        foreach (Transform child in confirmParent2) Destroy(child.gameObject);
-
-        // 候補を左右に交互に配置
-        for (int i = 0; i < candidateSkills.Count; i++)
+        if (overlayManager != null)
         {
-            Transform parent = (i % 2 == 0) ? confirmParent1 : confirmParent2;
-            GameObject cellObj = Instantiate(skillSlotCellPrefab, parent, false);
-            SkillSlotCell cell = cellObj.GetComponent<SkillSlotCell>();
-            cell.SetSkill(candidateSkills[i]);
+            overlayManager.ShowSkillConfirmOverlay(candidateSkills, onConfirm);
         }
-
-        confirmOverlay.SetActive(true);
-
-        // Confirm ボタン押下時にランダム選択
-        confirmButton.onClick.RemoveAllListeners();
-        confirmButton.onClick.AddListener(() =>
+        else
         {
-            confirmOverlay.SetActive(false);
-            int index = UnityEngine.Random.Range(0, candidateSkills.Count);
-            SkillData selected = candidateSkills[index];
-            onConfirm?.Invoke(selected);
-        });
+            Debug.LogWarning("[BattleUIManager] OverlayManagerがセットされていません");
+        }
+    }
+
+    public void HideSkillConfirmOverlay()
+    {
+        if (overlayManager != null)
+        {
+            overlayManager.HideOverlay();
+        }
     }
 }
