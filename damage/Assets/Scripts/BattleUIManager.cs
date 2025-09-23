@@ -70,18 +70,25 @@ public class BattleUIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Confirmオーバーレイ表示をOverlayManagerに委譲
+    /// Confirmオーバーレイ表示
     /// </summary>
-    public void ShowSkillConfirmOverlay(List<SkillData> candidateSkills, System.Action<SkillData> onConfirm)
+    // public void ShowSkillConfirmOverlay(List<SkillData> candidateSkills, System.Action<SkillData> onConfirm)
+    // {
+    //     if (overlayManager != null)
+    //     {
+    //         overlayManager.ShowSkillConfirmOverlay(candidateSkills, onConfirm);
+    //     }
+    //     else
+    //     {
+    //         Debug.LogWarning("[BattleUIManager] OverlayManagerがセットされていません");
+    //     }
+    // }
+
+    public void ShowSkillConfirmOverlay(SkillSlotResult result, int player)
     {
-        if (overlayManager != null)
-        {
-            overlayManager.ShowSkillConfirmOverlay(candidateSkills, onConfirm);
-        }
-        else
-        {
-            Debug.LogWarning("[BattleUIManager] OverlayManagerがセットされていません");
-        }
+        //  List<SkillData> candidateSkills
+        
+        overlayManager.ShowSkillConfirmOverlay(result.CandidateSkills, player);
     }
 
     public void HideSkillConfirmOverlay()

@@ -68,8 +68,10 @@ public class BattleManager : MonoBehaviour
         turnDisposable?.Dispose();
         turnDisposable = new CompositeDisposable();
 
+        // ターン開始処理（ターンコントローラにスロットと UI を渡す）
         turnController.StartTurn(player1Slot, player2Slot, uiManager);
 
+        // プレイヤー両方のスロット候補を CombineLatest で監視
         Observable.CombineLatest(
             player1Slot.OnStopSpin,
             player2Slot.OnStopSpin,
@@ -79,21 +81,36 @@ public class BattleManager : MonoBehaviour
             if (turnConfirmed) return;
             turnConfirmed = true;
 
-            // Player1 候補リストを渡して Confirm 表示
-            uiManager.ShowSkillConfirmOverlay(player1Slot.candidateSkills, selectedSkill =>
-            {
-                player1Slot.SetSelectedSkill(selectedSkill);
-                player1Slot.OnStopSpin.OnNext(selectedSkill);
-            });
+            // Player1
+            var result1 = new SkillSlotResult(player1, player1Slot.candidateSkills);
+            uiManager.ShowSkillConfirmOverlay(result1,1);
+            // {
+            //     player1Slot.SetSelectedSkill(selectedSkill);
+            //     result1.SelectedSkill = selectedSkill; // 確定スキルも反映
+            // });
 
-            // Player2 候補リストを渡して Confirm 表示
-            uiManager.ShowSkillConfirmOverlay(player2Slot.candidateSkills, selectedSkill =>
-            {
-                player2Slot.SetSelectedSkill(selectedSkill);
-                player2Slot.OnStopSpin.OnNext(selectedSkill);
-            });
+            // Player2
+            var result2 = new SkillSlotResult(player2, player2Slot.candidateSkills);
+            uiManager.ShowSkillConfirmOverlay(result2,2);
+            // {
+            //     player2Slot.SetSelectedSkill(selectedSkill);
+            //     result2.SelectedSkill = selectedSkill; // 確定スキルも反映
+            // });
+
         }).AddTo(turnDisposable);
     }
+
+    /// <summary>
+    /// 指定スロットの候補リストを SkillSlotResult でラップして UI に通知
+    /// </summary>
+    // private void NotifySlotResult(CharacterInstance player, SkillSlot slot)
+    // {
+    //     if (slot.candidateSkills.Count == 0) return;
+
+    //     var result = new SkillSlotResult(player, new List<SkillData>(slot.candidateSkills));
+    //     uiManager.OnSkillSlotResult(result); // UI 側に通知
+    // }
+
 
     public void OnStartQueueButtonPressed()
     {

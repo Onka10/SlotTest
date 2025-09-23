@@ -16,7 +16,7 @@ public class SkillSlot : MonoBehaviour
     private SkillData selectedSkill;
     public List<SkillData> candidateSkills = new List<SkillData>();
 
-    public Subject<SkillData> OnStopSpin = new Subject<SkillData>();
+    public Subject<List<SkillData>> OnStopSpin = new Subject<List<SkillData>>();
 
     private void Awake()
     {
@@ -45,41 +45,52 @@ public class SkillSlot : MonoBehaviour
         view.UpdateStopRangeIndicator(stopRange);
     }
 
-    public void StopSpin()
+public void StopSpin()
+{
+    if (!spinning) return; // 二重呼び出し防止
+    spinning = false;
+    candidateSkills.Clear();
+
+    // 中央の判定用のTransform（リールの中心）
+    Vector3 centerWorldPos = view.transform.position;
+    float rangeTop = centerWorldPos.y + stopRange;
+    float rangeBottom = centerWorldPos.y - stopRange;
+
+    // Debug.Log($"[SkillSlot] stopRange座標範囲: {rangeBottom} ～ {rangeTop}");
+
+    foreach (var cell in view.GetCells())
     {
-        if (!spinning) return; // 二重呼び出し防止
-        spinning = false;
-        candidateSkills.Clear();
+        RectTransform rt = cell.GetComponent<RectTransform>();
+        float cellHeight = rt.rect.height;
 
-        foreach (var cell in view.GetCells())
+        Vector3 cellWorldPos = cell.transform.position;
+        float top = cellWorldPos.y + cellHeight / 2f;
+        float bottom = cellWorldPos.y - cellHeight / 2f;
+
+        if ((top >= rangeBottom && top <= rangeTop) ||
+            (bottom >= rangeBottom && bottom <= rangeTop))
         {
-            var rt = cell.GetComponent<RectTransform>();
-            float top = rt.anchoredPosition.y;
-            float bottom = rt.anchoredPosition.y - rt.sizeDelta.y;
-
-            // 中央 ± stopRange にかかっていれば候補に追加
-            if ((top >= -stopRange && top <= stopRange) ||
-                (bottom >= -stopRange && bottom <= stopRange))
-            {
-                candidateSkills.Add(cell.GetSkill());
-            }
+            candidateSkills.Add(cell.GetSkill());
+            Debug.Log($"[SkillSlot] stopRange内のスキル: {cell.GetSkill().skillName} (top={top}, bottom={bottom}, siblingIndex={cell.transform.GetSiblingIndex()})");
         }
 
-        if (candidateSkills.Count == 0)
-            throw new Exception("StopSpin: 範囲内にセルが存在しません");
-
-        // 候補からランダムで1つを選択
-        int randomIndex = UnityEngine.Random.Range(0, candidateSkills.Count);
-        selectedSkill = candidateSkills[randomIndex];
-
-        // OnStopSpin を発火して BattleManager 側に通知
-        OnStopSpin.OnNext(selectedSkill);
-
-        Debug.Log($"[SkillSlot] StopSpin 候補数: {candidateSkills.Count}, 選択スキル: {selectedSkill.skillName}");
+        // 全セルログ
+        // Debug.Log($"[SkillSlot] セル: {cell.GetSkill().skillName}, top={top}, bottom={bottom}, siblingIndex={cell.transform.GetSiblingIndex()}");
     }
 
+
+    if (candidateSkills.Count == 0)
+        throw new Exception("StopSpin: 範囲内にセルが存在しません");
+
+    // ランダム選択はやめて範囲内のリストをそのまま通知
+    OnStopSpin.OnNext(new List<SkillData>(candidateSkills));
+
+    // Debug.Log($"[SkillSlot] StopSpin 候補数: {candidateSkills.Count}, 選択スキル: {selectedSkill.skillName}");
+}
+
+
     public SkillData GetSelectedSkill() => selectedSkill;
-    public void SetSelectedSkill(SkillData skill) => selectedSkill = skill;
+    // public void SetSelectedSkill(SkillData skill) => selectedSkill = skill;
 
     private void Update()
     {

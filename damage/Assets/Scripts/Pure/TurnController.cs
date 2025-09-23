@@ -51,7 +51,9 @@ public class TurnController
         if (player1.IsAlive)
         {
             player1Slot.OnStopSpin
-                .Subscribe(skill => ReplaceFirstQuestionMark(player1, skill))
+                .Subscribe(skills => {
+                    ReplaceFirstQuestionMark(player1, skills);
+                })
                 .AddTo(turnDisposable);
             player1Slot.StartSpin();
         }
@@ -60,19 +62,26 @@ public class TurnController
         if (player2.IsAlive)
         {
             player2Slot.OnStopSpin
-                .Subscribe(skill => ReplaceFirstQuestionMark(player2, skill))
+                .Subscribe(skills => {
+                    ReplaceFirstQuestionMark(player2, skills);
+                })
                 .AddTo(turnDisposable);
             player2Slot.StartSpin();
         }
     }
 
-    private void ReplaceFirstQuestionMark(CharacterInstance player, SkillData skill)
+    private void ReplaceFirstQuestionMark(CharacterInstance player, List<SkillData> skills)
     {
         int index = CurrentQueue.IndexOf("?");
-        if (index >= 0)
+        if (index >= 0 && skills.Count > 0)
         {
-            CurrentQueue[index] = $"{player.Name} → {skill.skillName}";
+            // 候補リストの先頭スキル名を表示
+            CurrentQueue[index] = $"{player.Name} → {skills[0].skillName}";
         }
+
+        // デバッグ用: 候補スキルの中身をログ出力
+        string skillNames = string.Join(", ", skills.ConvertAll(s => s.skillName));
+        // Debug.Log($"[TurnController] {player.Name} の候補スキル: {skillNames}");
     }
 
     // ターン終了時に購読を破棄
