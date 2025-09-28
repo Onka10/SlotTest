@@ -5,6 +5,7 @@ using UnityEngine.UI;
 
 public class OverlayManager : MonoBehaviour
 {
+    public BattleManager battleManager;
     [Header("Confirmオーバーレイ")]
     public GameObject confirmOverlay;       // オーバーレイルート
     public GameObject skillSlotCellPrefab;  // SkillSlotCell プレハブ
@@ -12,6 +13,18 @@ public class OverlayManager : MonoBehaviour
 
     public Transform confirmParent1;  // 左側配置
     public Transform confirmParent2;  // 右側配置
+
+    private void Start()
+    {
+        if (confirmButton != null)
+        {
+            confirmButton.onClick.AddListener(OnButtonClicked);
+        }
+        else
+        {
+            Debug.LogWarning($"{name} に Button コンポーネントがアタッチされていません");
+        }
+    }
 
     /// <summary>
     /// 確定スキルオーバーレイを表示（複数候補対応）
@@ -58,14 +71,14 @@ public class OverlayManager : MonoBehaviour
             {
                 GameObject cellObj = Instantiate(skillSlotCellPrefab, confirmParent1, false);
                 SkillSlotCell cell = cellObj.GetComponent<SkillSlotCell>();
-                cell.SetSkill(candidateSkills[i]);
+                cell.SetSkill(candidateSkills[i],1);
             }
         }else{
             for (int i = 0; i < candidateSkills.Count; i++)
             {
                 GameObject cellObj = Instantiate(skillSlotCellPrefab, confirmParent2, false);
                 SkillSlotCell cell = cellObj.GetComponent<SkillSlotCell>();
-                cell.SetSkill(candidateSkills[i]);
+                cell.SetSkill(candidateSkills[i],2);
             }
         }
         // 候補を左右に交互に配置
@@ -82,7 +95,19 @@ public class OverlayManager : MonoBehaviour
         confirmOverlay.SetActive(true);
     }
 
-    public void HideOverlay()
+    /// <summary>
+    /// ボタンが押された時の処理
+    /// </summary>
+    private void OnButtonClicked()
+    {
+        //ダメージ処理開始
+        battleManager.OnStartQueueButtonPressed();
+
+        //オーバーレイ閉じる
+        HideOverlay();
+    }
+
+    private void HideOverlay()
     {
         if (confirmOverlay != null)
             confirmOverlay.SetActive(false);

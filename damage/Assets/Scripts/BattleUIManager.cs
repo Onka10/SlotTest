@@ -90,12 +90,4 @@ public class BattleUIManager : MonoBehaviour
         
         overlayManager.ShowSkillConfirmOverlay(result.CandidateSkills, player);
     }
-
-    public void HideSkillConfirmOverlay()
-    {
-        if (overlayManager != null)
-        {
-            overlayManager.HideOverlay();
-        }
-    }
 }

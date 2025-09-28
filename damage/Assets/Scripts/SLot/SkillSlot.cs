@@ -13,7 +13,6 @@ public class SkillSlot : MonoBehaviour
     private bool spinning = false;
     private float currentSpeed = 0f;
 
-    private SkillData selectedSkill;
     public List<SkillData> candidateSkills = new List<SkillData>();
 
     public Subject<List<SkillData>> OnStopSpin = new Subject<List<SkillData>>();
@@ -27,19 +26,15 @@ public class SkillSlot : MonoBehaviour
 
     public void Initialize(SkillData[] skillList)
     {
-        selectedSkill = null;
         candidateSkills.Clear();
         view.InitializeCells(skillList);
     }
-
-    public void ResetSelection() => selectedSkill = null;
 
     public void StartSpin()
     {
         if (view.GetCells().Count == 0) return;
         spinning = true;
         currentSpeed = startSpeed;
-        selectedSkill = null;
 
         // 停止範囲表示を更新
         view.UpdateStopRangeIndicator(stopRange);
@@ -87,10 +82,6 @@ public void StopSpin()
 
     // Debug.Log($"[SkillSlot] StopSpin 候補数: {candidateSkills.Count}, 選択スキル: {selectedSkill.skillName}");
 }
-
-
-    public SkillData GetSelectedSkill() => selectedSkill;
-    // public void SetSelectedSkill(SkillData skill) => selectedSkill = skill;
 
     private void Update()
     {

@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UniRx;
 
-public class BattleManager : MonoBehaviour
+public class BattleManager : Singleton<BattleManager>
 {
     public CharacterData player1Data;
     public CharacterData player2Data;
@@ -17,12 +17,14 @@ public class BattleManager : MonoBehaviour
     private CharacterInstance enemy;
 
     private BattleActionQueue actionQueue;
-    private TurnController turnController;
     private ActionExecutor actionExecutor;
 
     public float actionDelay = 1f;
     private bool turnConfirmed = false;
     private CompositeDisposable turnDisposable;
+
+    SkillData selectdeSkill1;
+    SkillData selectdeSkill2;
 
     private void Start()
     {
@@ -36,7 +38,6 @@ public class BattleManager : MonoBehaviour
         player2Slot.Initialize(player2.data.skills);
 
         actionQueue = new BattleActionQueue();
-        turnController = new TurnController(player1, player2, enemy);
         actionExecutor = new ActionExecutor(actionQueue, uiManager, player1, player2, enemy)
         {
             ActionDelay = actionDelay
@@ -69,7 +70,7 @@ public class BattleManager : MonoBehaviour
         turnDisposable = new CompositeDisposable();
 
         // ターン開始処理（ターンコントローラにスロットと UI を渡す）
-        turnController.StartTurn(player1Slot, player2Slot, uiManager);
+        StartTurn(player1Slot, player2Slot);
 
         // プレイヤー両方のスロット候補を CombineLatest で監視
         Observable.CombineLatest(
@@ -83,7 +84,7 @@ public class BattleManager : MonoBehaviour
 
             // Player1
             var result1 = new SkillSlotResult(player1, player1Slot.candidateSkills);
-            uiManager.ShowSkillConfirmOverlay(result1,1);
+            uiManager.ShowSkillConfirmOverlay(result1, 1);
             // {
             //     player1Slot.SetSelectedSkill(selectedSkill);
             //     result1.SelectedSkill = selectedSkill; // 確定スキルも反映
@@ -91,7 +92,7 @@ public class BattleManager : MonoBehaviour
 
             // Player2
             var result2 = new SkillSlotResult(player2, player2Slot.candidateSkills);
-            uiManager.ShowSkillConfirmOverlay(result2,2);
+            uiManager.ShowSkillConfirmOverlay(result2, 2);
             // {
             //     player2Slot.SetSelectedSkill(selectedSkill);
             //     result2.SelectedSkill = selectedSkill; // 確定スキルも反映
@@ -114,14 +115,14 @@ public class BattleManager : MonoBehaviour
 
     public void OnStartQueueButtonPressed()
     {
-        foreach (var entry in turnController.CurrentQueue)
+        foreach (var entry in CurrentQueue)
         {
             if (entry.StartsWith("?")) continue;
 
             if (entry.Contains(player1.Name))
-                actionQueue.EnqueueAction(player1, player1Slot.GetSelectedSkill(), enemy);
+                actionQueue.EnqueueAction(player1, selectdeSkill1, enemy);
             else if (entry.Contains(player2.Name))
-                actionQueue.EnqueueAction(player2, player2Slot.GetSelectedSkill(), enemy);
+                actionQueue.EnqueueAction(player2, selectdeSkill2, enemy);
             else if (entry == enemy.Name)
             {
                 var alivePlayers = new List<CharacterInstance>();
@@ -138,4 +139,66 @@ public class BattleManager : MonoBehaviour
 
         StartCoroutine(actionExecutor.ExecuteQueueWithDelay());
     }
+
+    public void SetSelectedSkill(SkillData currentSkill, int playerNumber)
+    {
+        if (playerNumber == 1)
+        {
+            selectdeSkill1 = currentSkill;
+        }
+        else
+        {
+            selectdeSkill2 = currentSkill;
+        }
+    }
+    
+
+    // ReactiveCollection でキュー管理
+    public ReactiveCollection<string> CurrentQueue { get; private set; } = new ReactiveCollection<string>();
+
+    public void StartTurn(SkillSlot player1Slot, SkillSlot player2Slot)
+    {
+        // 古い購読を破棄
+        turnDisposable?.Dispose();
+        turnDisposable = new CompositeDisposable();
+
+        CurrentQueue.Clear();
+
+        // 未確定キュー作成
+        if (player1.IsAlive) CurrentQueue.Add("?");
+        if (enemy.IsAlive) CurrentQueue.Add(enemy.Name);
+        if (player2.IsAlive) CurrentQueue.Add("?");
+        if (enemy.IsAlive) CurrentQueue.Add(enemy.Name);
+
+        // UI にキューを反映
+        CurrentQueue.ObserveCountChanged()
+            .Subscribe(_ => uiManager.ShowQueue(new List<string>(CurrentQueue)))
+            .AddTo(turnDisposable);
+        CurrentQueue.ObserveReplace()
+            .Subscribe(_ => uiManager.ShowQueue(new List<string>(CurrentQueue)))
+            .AddTo(turnDisposable);
+
+        // プレイヤー1のスロット購読
+        if (player1.IsAlive)
+        {
+            // player1Slot.OnStopSpin
+            //     .Subscribe(skills => {
+            //         ReplaceFirstQuestionMark(player1, skills);
+            //     })
+            //     .AddTo(turnDisposable);
+            player1Slot.StartSpin();
+        }
+
+        // プレイヤー2のスロット購読
+        if (player2.IsAlive)
+        {
+            // player2Slot.OnStopSpin
+            //     .Subscribe(skills => {
+            //         ReplaceFirstQuestionMark(player2, skills);
+            //     })
+            //     .AddTo(turnDisposable);
+            player2Slot.StartSpin();
+        }
+    }
+    
 }

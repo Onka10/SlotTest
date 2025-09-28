@@ -36,7 +36,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -80}
+  m_AnchoredPosition: {x: 0, y: -226}
   m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6291631045470869731
@@ -276,6 +276,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 21ee28e773f99a345b41034c3cf14fbc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  battleManager: {fileID: 0}
   confirmOverlay: {fileID: 8909485281749634976}
   skillSlotCellPrefab: {fileID: 3600934685815877899, guid: 0f94e9702220ecb4ca81677e987a1dc6, type: 3}
   confirmButton: {fileID: 4852847516507587794}
@@ -359,7 +360,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Button
+  m_Text: GO
 --- !u!1 &7414722993415752717
 GameObject:
   m_ObjectHideFlags: 0
